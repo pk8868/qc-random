@@ -13,8 +13,7 @@ def ChooseBackend():
 
 # Generates random number between 0 and 1
 def GenerateRandomFraction(accuracy):
-    if accuracy <= 1:
-        raise Exception("Accuracy must be higher than 1!")
+    assert accuracy > 1, "Accuracy must be higher than 1!"
     qr = QuantumRegister(1)
     cr = ClassicalRegister(accuracy)
     circuit = QuantumCircuit(qr, cr)
@@ -30,11 +29,9 @@ def GenerateRandomFraction(accuracy):
     return int(data[0], 2) / (2**accuracy - 1)
     
 def RNG(left, right, accuracy=16):
-    if accuracy <= 1:
-        raise Exception("Accuracy must be higher than 1!")
-    if left >= right:
-        raise Exception("Left must be lower than right!")
-
+    assert accuracy > 1, "Accuracy must be higher than 1!"
+    assert left < right, "Left must be lower than right!"
+    
     randRange = abs(right - left)
     ret = GenerateRandomFraction(accuracy) * randRange  + left
     return ret
