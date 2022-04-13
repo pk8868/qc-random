@@ -1,12 +1,8 @@
 from qiskit import *
-import math
 
-def RNG(left, right, accuracy=16):
+def GenerateRandomFraction(accuracy):
     if accuracy <= 1:
         raise Exception("Accuracy must be higher than 1!")
-    if left >= right:
-        raise Exception("Left must be lower than right!")
-
     qr = QuantumRegister(1)
     cr = ClassicalRegister(accuracy)
     circuit = QuantumCircuit(qr, cr)
@@ -19,10 +15,19 @@ def RNG(left, right, accuracy=16):
     job = execute(circuit, BasicAer.get_backend('qasm_simulator'), shots=1, memory=True)
     data = job.result().get_memory()
 
-    ret = int(data[0], 2)
+    return int(data[0], 2)
+    
+
+def RNG(left, right, accuracy=16):
+    if accuracy <= 1:
+        raise Exception("Accuracy must be higher than 1!")
+    if left >= right:
+        raise Exception("Left must be lower than right!")
+
+    ret = GenerateRandomFraction(accuracy)
+    
     rrange = abs(right - left)
     ret = ret / (2**accuracy - 1)
     ret = ret * rrange
     ret += left
     return ret
-    
