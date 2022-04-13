@@ -1,5 +1,17 @@
 from qiskit import *
 
+def ChooseBackend():
+    try:
+        IBMQ.load_account()
+        provider = IBMQ.get_provider(hub='ibm-q')
+        servers=provider.backends(simulator=False, operational=True)
+        leastbusy = least_busy(servers)
+        backend = provider.get_backend("{}".format(leastbusy))
+    except:
+        backend = BasicAer.get_backend("qasm_simulator")
+    return backend
+
+
 def GenerateRandomFraction(accuracy):
     if accuracy <= 1:
         raise Exception("Accuracy must be higher than 1!")
