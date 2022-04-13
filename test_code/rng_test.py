@@ -1,7 +1,11 @@
+from distutils.log import log
 from qiskit import *
-
+import math
 # right is bit count for now
 def RNG(left, right, count):
+    range = right - left
+    n = math.ceil(math.log(range, 2))
+    print(n)
     qr = QuantumRegister(1)
     cr = ClassicalRegister(right)
     circuit = QuantumCircuit(qr, cr)
