@@ -1,5 +1,13 @@
 from qiskit import *
 
+def config_chceck():
+    try:
+        IBMQ.load_account()
+    except:
+        token = open("token.txt","r").readline()
+        IBMQ.save_account(token)
+        IBMQ.load_account()
+
 def ChooseBackend():
     try:
         IBMQ.load_account()
