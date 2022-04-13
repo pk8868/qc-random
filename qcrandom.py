@@ -15,7 +15,7 @@ def GenerateRandomFraction(accuracy):
     job = execute(circuit, BasicAer.get_backend('qasm_simulator'), shots=1, memory=True)
     data = job.result().get_memory()
 
-    return int(data[0], 2)
+    return int(data[0], 2) / (2**accuracy - 1)
     
 
 def RNG(left, right, accuracy=16):
@@ -25,9 +25,8 @@ def RNG(left, right, accuracy=16):
         raise Exception("Left must be lower than right!")
 
     ret = GenerateRandomFraction(accuracy)
-    
+
     rrange = abs(right - left)
-    ret = ret / (2**accuracy - 1)
     ret = ret * rrange
     ret += left
     return ret
