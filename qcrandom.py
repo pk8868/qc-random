@@ -24,7 +24,7 @@ def GenerateRandomFraction(accuracy):
         circuit.measure(0, j)
         circuit.reset(0)
 
-    job = execute(circuit, BasicAer.get_backend('qasm_simulator'), shots=1, memory=True)
+    job = execute(circuit, ChooseBackend(), shots=1, memory=True)
     data = job.result().get_memory()
 
     return int(data[0], 2) / (2**accuracy - 1)
