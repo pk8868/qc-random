@@ -1,6 +1,6 @@
 from qiskit import *
 
-def config_chceck():
+def ConfigCheck():
     try:
         IBMQ.load_account()
     except:
