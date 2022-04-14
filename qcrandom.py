@@ -58,7 +58,6 @@ def GenerateRandomFraction(accuracy):
         circuit.measure(0, j)
         if j < accuracy - 1:
             circuit.reset(0)
-    print(circuit.draw())
     job = execute(circuit, ChooseBackend(), shots=1, memory=True)
     with open('qclog.txt', 'a') as file:
         file.write(time.asctime())
