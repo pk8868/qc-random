@@ -1,23 +1,45 @@
 from qiskit import *
+from qiskit.providers.ibmq import least_busy
+from qiskit.tools.monitor import job_monitor
+import logging
+import time
+
+class _QCLogging:
+    def __init__(self) -> None:
+        self.logger = logging.getLogger('QCLogger')
+        self.fileHandler = logging.FileHandler("qclog.txt")
+        self.formatter = logging.Formatter('%(asctime)s: %(levelname)s> %(message)s')
+        self.fileHandler.setFormatter(self.formatter)
+
+        self.logger.addHandler(self.fileHandler)
+        self.logger.setLevel(logging.DEBUG)
+
+_qclogger = _QCLogging()
 
 def _GetRoundFactor(accuracy):
     return len(str(2**accuracy))
 
 def ConfigCheck():
     try:
+        _qclogger.logger.info("Loading account...")
         IBMQ.load_account()
+        _qclogger.logger.info("Account loaded succesfully!")
     except:
+        _qclogger.logger.error("Loading failed! Loading from token.txt")
         token = open("token.txt","r").readline()
         IBMQ.save_account(token)
         IBMQ.load_account()
 
 def ChooseBackend():
     try:
+        _qclogger.logger.info("Selecting backend...")
         provider = IBMQ.get_provider(hub='ibm-q')
-        servers=provider.backends(simulator=False, operational=True)
+        servers = provider.backends(simulator=False, operational=True)
         leastbusy = least_busy(servers)
         backend = provider.get_backend("{}".format(leastbusy))
+        _qclogger.logger.info("Backend selected successfully!")
     except:
+        _qclogger.logger.error("Selecting backend failed!")
         backend = BasicAer.get_backend("qasm_simulator")
     return backend
 
@@ -31,9 +53,13 @@ def GenerateRandomFraction(accuracy):
     for j in range(accuracy):
         circuit.h(0)
         circuit.measure(0, j)
-        circuit.reset(0)
-
+        if j < accuracy - 1:
+            circuit.reset(0)
+    print(circuit.draw())
     job = execute(circuit, ChooseBackend(), shots=1, memory=True)
+    with open('qclog.txt', 'a') as file:
+        file.write(time.asctime())
+        job_monitor(job, interval=5, output=file)
     data = job.result().get_memory()
     return round(int(data[0], 2) / (2**accuracy - 1), _GetRoundFactor(accuracy))
     
