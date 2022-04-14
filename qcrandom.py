@@ -4,21 +4,6 @@ from qiskit.tools.monitor import job_monitor
 import logging
 import time
 
-class _QCLogging:
-    def __init__(self) -> None:
-        self.logger = logging.getLogger('QCLogger')
-        self.fileHandler = logging.FileHandler("qclog.txt")
-        self.formatter = logging.Formatter('%(asctime)s: %(levelname)s> %(message)s')
-        self.fileHandler.setFormatter(self.formatter)
-
-        self.logger.addHandler(self.fileHandler)
-        self.logger.setLevel(logging.DEBUG)
-
-_qclogger = _QCLogging()
-
-def _GetRoundFactor(accuracy):
-    return len(str(2**accuracy))
-
 def ConfigCheck():
     try:
         _qclogger.logger.info("Loading account...")
@@ -37,7 +22,7 @@ def ChooseBackend(NotASimulator=False):
         servers = provider.backends(simulator=False, operational=True)
         leastbusy = least_busy(servers)
         backend = provider.get_backend("{}".format(leastbusy))
-        _qclogger.logger.info("Backend selected successfully!")
+        _qclogger.logger.info("Selected {}!".format(leastbusy))
     except:
         _qclogger.logger.error("Selecting backend failed!")
         if NotASimulator == True:
@@ -45,6 +30,34 @@ def ChooseBackend(NotASimulator=False):
         else:
             backend = BasicAer.get_backend("qasm_simulator")
     return backend
+
+class _QCLogging:
+    def __init__(self):
+        self.logger = logging.getLogger('QCLogger')
+        self.fileHandler = logging.FileHandler("qclog.txt")
+        self.formatter = logging.Formatter('%(asctime)s: %(levelname)s> %(message)s')
+        self.fileHandler.setFormatter(self.formatter)
+
+        self.logger.addHandler(self.fileHandler)
+        self.logger.setLevel(logging.DEBUG)
+
+class _QCBackend:
+    def __init__(self):
+        ConfigCheck()
+        self.lastChange = time.time()
+        self.backend = ChooseBackend()
+    def GetBackend(self):
+        # hard coded 5 minutes
+        if (time.time() - self.lastChange > 300):
+            self.backend = ChooseBackend()
+            self.lastChange = time.time()
+        return self.backend
+
+_qclogger = _QCLogging()
+_qcbackend = _QCBackend()
+
+def _GetRoundFactor(accuracy):
+    return len(str(2**accuracy))
 
 # Generates random number between 0 and 1
 def GenerateRandomFraction(accuracy):
@@ -58,10 +71,12 @@ def GenerateRandomFraction(accuracy):
         circuit.measure(0, j)
         if j < accuracy - 1:
             circuit.reset(0)
-    job = execute(circuit, ChooseBackend(), shots=1, memory=True)
+    
+    job = execute(circuit, _qcbackend.GetBackend(), shots=1, memory=True)
     with open('qclog.txt', 'a') as file:
         file.write(time.asctime())
         job_monitor(job, interval=5, output=file)
+    
     data = job.result().get_memory()
     return round(int(data[0], 2) / (2**accuracy - 1), _GetRoundFactor(accuracy))
     
