@@ -56,7 +56,7 @@ class _QCBackend:
 _qclogger = _QCLogging()
 _qcbackend = _QCBackend()
 
-def _GetRoundFactor(accuracy):
+def GetRoundFactor(accuracy):
     return len(str(2**accuracy))
 
 # Generates random number between 0 and 1
@@ -78,11 +78,11 @@ def GenerateRandomFraction(accuracy):
         job_monitor(job, interval=5, output=file)
     
     data = job.result().get_memory()
-    return round(int(data[0], 2) / (2**accuracy - 1), _GetRoundFactor(accuracy))
+    return round(int(data[0], 2) / (2**accuracy - 1), GetRoundFactor(accuracy))
     
 def QCRandom(left, right, accuracy=16):
     assert accuracy > 1, "Accuracy must be higher than 1!"
     assert left < right, "Left must be lower than right!"
     
     ret = GenerateRandomFraction(accuracy) * abs(right - left)  + left
-    return round(ret, _GetRoundFactor(accuracy))
+    return round(ret, GetRoundFactor(accuracy))
