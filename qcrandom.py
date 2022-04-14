@@ -30,7 +30,7 @@ def ConfigCheck():
         IBMQ.save_account(token)
         IBMQ.load_account()
 
-def ChooseBackend():
+def ChooseBackend(NotASimulator=False):
     try:
         _qclogger.logger.info("Selecting backend...")
         provider = IBMQ.get_provider(hub='ibm-q')
@@ -40,7 +40,10 @@ def ChooseBackend():
         _qclogger.logger.info("Backend selected successfully!")
     except:
         _qclogger.logger.error("Selecting backend failed!")
-        backend = BasicAer.get_backend("qasm_simulator")
+        if NotASimulator == True:
+            backend = "None quantum computer is available"
+        else:
+            backend = BasicAer.get_backend("qasm_simulator")
     return backend
 
 # Generates random number between 0 and 1
