@@ -10,7 +10,6 @@ def ConfigCheck():
 
 def ChooseBackend():
     try:
-        IBMQ.load_account()
         provider = IBMQ.get_provider(hub='ibm-q')
         servers=provider.backends(simulator=False, operational=True)
         leastbusy = least_busy(servers)
