@@ -1,5 +1,8 @@
 from qiskit import *
 
+def _GetRoundFactor(accuracy):
+    return len(str(2**accuracy))
+
 def ConfigCheck():
     try:
         IBMQ.load_account()
@@ -32,13 +35,11 @@ def GenerateRandomFraction(accuracy):
 
     job = execute(circuit, ChooseBackend(), shots=1, memory=True)
     data = job.result().get_memory()
-
-    return int(data[0], 2) / (2**accuracy - 1)
+    return round(int(data[0], 2) / (2**accuracy - 1), _GetRoundFactor(accuracy))
     
-def RNG(left, right, accuracy=16):
+def QCRandom(left, right, accuracy=16):
     assert accuracy > 1, "Accuracy must be higher than 1!"
     assert left < right, "Left must be lower than right!"
     
-    randRange = abs(right - left)
-    ret = GenerateRandomFraction(accuracy) * randRange  + left
-    return ret
+    ret = GenerateRandomFraction(accuracy) * abs(right - left)  + left
+    return round(ret, _GetRoundFactor(accuracy))
