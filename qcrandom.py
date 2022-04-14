@@ -41,7 +41,7 @@ def ChooseBackend(NotASimulator=False):
     except:
         _qclogger.logger.error("Selecting backend failed!")
         if NotASimulator == True:
-            backend = "None quantum computer is available"
+            backend = "No quantum computer is available"
         else:
             backend = BasicAer.get_backend("qasm_simulator")
     return backend
