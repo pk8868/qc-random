@@ -19,7 +19,7 @@ def ChooseBackend(NotASimulator=False):
     try:
         _qclogger.logger.info("Selecting backend...")
         provider = IBMQ.get_provider(hub='ibm-q')
-        servers = provider.backends(simulator=False, operational=True)
+        servers = provider.backends(filters=lambda b: "reset" in b.configuration().basis_gates, simulator=False, operational=True)
         leastbusy = least_busy(servers)
         backend = provider.get_backend("{}".format(leastbusy))
         _qclogger.logger.info("Selected {}!".format(leastbusy))
