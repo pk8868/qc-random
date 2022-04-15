@@ -34,7 +34,7 @@ def ChooseBackend(NotASimulator=False):
 class _QCLogging:
     def __init__(self):
         self.logger = logging.getLogger('QCLogger')
-        self.fileHandler = logging.FileHandler("qclog.txt")
+        self.fileHandler = logging.FileHandler("qcrandom.log")
         self.formatter = logging.Formatter('%(asctime)s: %(levelname)s> %(message)s')
         self.fileHandler.setFormatter(self.formatter)
 
@@ -73,7 +73,7 @@ def GenerateRandomFraction(accuracy):
             circuit.reset(0)
     
     job = execute(circuit, _qcbackend.GetBackend(), shots=1, memory=True)
-    with open('qclog.txt', 'a') as file:
+    with open('qcrandom.log', 'a') as file:
         file.write(time.asctime())
         job_monitor(job, interval=5, output=file)
     
