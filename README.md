@@ -1,4 +1,12 @@
 # qc-random
-qc-random is a python library which uses qiskit to generate random numbers.
+## Overview
+qc-random is a python library which provides easy way to generate random numbers on quantum computers.
 
-For more check our [Wiki page](https://github.com/pk8868/qc-random-numbers/wiki)!
+## Setup
+Setup instructions are avaliable [here](https://github.com/pk8868/qc-random/wiki/Setup).
+
+## Learn
+Check out our [Wiki page](https://github.com/pk8868/qc-random/wiki)!
+
+## Any problems?
+If you find a bug, feel free to post an [issue](https://github.com/pk8868/qc-random/issues)!
