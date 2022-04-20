@@ -104,10 +104,43 @@ def GenerateRandomFraction(accuracy):
     
     data = job.result().get_memory()
     return round(int(data[0], 2) / (2**accuracy - 1), GetRoundFactor(accuracy))
+
+    
+def GenerateBuffer(accuracy,buffersize):
+    assert accuracy > 1, "Accuracy must be higher than 1!"
+    qr = QuantumRegister(1)
+    cr = ClassicalRegister(accuracy)
+    circuit = QuantumCircuit(qr, cr)
+
+    for j in range(accuracy):
+        circuit.h(0)
+        circuit.measure(0, j)
+        if j < accuracy - 1:
+            circuit.reset(0) 
+    
+    job = execute(circuit, _qcbackend.GetBackend(), shots=buffersize, memory=True)
+    with open('qclog.txt', 'a') as file:
+        file.write(time.asctime())
+        job_monitor(job, interval=5, output=file)
+
+    data = job.result().get_memory()
+    i=0
+    while i<buffersize:
+        buffer.append(round(int(data[i], 2) / (2**accuracy - 1), GetRoundFactor(accuracy)))
+        i=i+1
+
+
     
 def QCRandom(left, right, accuracy=16):
     assert accuracy > 1, "Accuracy must be higher than 1!"
     assert left < right, "Left must be lower than right!"
-    
-    ret = GenerateRandomFraction(accuracy) * abs(right - left)  + left
-    return round(ret, GetRoundFactor(accuracy))
+
+    try:
+        ret = buffer[0] * abs(right - left)  + left
+        buffer.pop(0)
+        return round(ret, GetRoundFactor(accuracy))
+    except:
+        GenerateBuffer(16,100)
+        ret = buffer[0] * abs(right - left)  + left
+        buffer.pop(0)
+        return round(ret, GetRoundFactor(accuracy))
