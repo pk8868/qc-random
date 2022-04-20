@@ -20,7 +20,7 @@ def ChooseBackend(NotASimulator=False):
     try:
         _qclogger.logger.info("Selecting backend...")
         provider = IBMQ.get_provider(hub='ibm-q')
-        servers = provider.backends(filters=lambda b: "reset" in b.configuration().basis_gates, simulator=False, operational=True)
+        servers = provider.backends(filters=lambda b: "reset" in b.configuration().basis_gates and not b.configuration().backend_name in _qcconfig.exclusions, simulator=False, operational=True)
         leastbusy = least_busy(servers)
         backend = provider.get_backend("{}".format(leastbusy))
         _qclogger.logger.info("Selected {}!".format(leastbusy))
@@ -64,7 +64,6 @@ class _QCConfig:
     def LoadConfig(self):
         with open("config.json", "r") as file:
             config = json.load(file)
-            print(config)
             self.logFile = config['Log_File']
             self.exclusions = config['Exclusions']
             self.expireTime = config['Expire']
