@@ -5,3 +5,7 @@ qcrandom.log
 __pycache__
 test_code/
 config.json
+
+build/
+qcrandom.egg-info/
+dist/
