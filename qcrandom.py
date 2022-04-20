@@ -3,6 +3,7 @@ from qiskit.providers.ibmq import least_busy
 from qiskit.tools.monitor import job_monitor
 import logging
 import time
+import json
 
 def ConfigCheck():
     try:
@@ -34,7 +35,7 @@ def ChooseBackend(NotASimulator=False):
 class _QCLogging:
     def __init__(self):
         self.logger = logging.getLogger('QCLogger')
-        self.fileHandler = logging.FileHandler("qcrandom.log")
+        self.fileHandler = logging.FileHandler(_qcconfig.logFile)
         self.formatter = logging.Formatter('%(asctime)s: %(levelname)s> %(message)s')
         self.fileHandler.setFormatter(self.formatter)
 
@@ -47,12 +48,28 @@ class _QCBackend:
         self.lastChange = time.time()
         self.backend = ChooseBackend()
     def GetBackend(self):
-        # hard coded 5 minutes
-        if (time.time() - self.lastChange > 300):
+        if (time.time() - self.lastChange > _qcconfig.expireTime):
             self.backend = ChooseBackend()
             self.lastChange = time.time()
         return self.backend
 
+class _QCConfig:
+    def __init__(self):
+        self.logFile = 'qcrandom.log'
+        self.exclusions = []
+        self.expireTime = 500
+
+        self.LoadConfig()
+        
+    def LoadConfig(self):
+        with open("config.json", "r") as file:
+            config = json.load(file)
+            print(config)
+            self.logFile = config['Log_File']
+            self.exclusions = config['Exclusions']
+            self.expireTime = config['Expire']
+
+_qcconfig = _QCConfig()
 _qclogger = _QCLogging()
 _qcbackend = _QCBackend()
 
@@ -73,7 +90,7 @@ def GenerateRandomFraction(accuracy):
             circuit.reset(0)
     
     job = execute(circuit, _qcbackend.GetBackend(), shots=1, memory=True)
-    with open('qcrandom.log', 'a') as file:
+    with open(_qcconfig.logFile, 'a') as file:
         file.write(time.asctime())
         job_monitor(job, interval=5, output=file)
     
