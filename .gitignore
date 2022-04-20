@@ -4,3 +4,4 @@ qclog.txt
 qcrandom.log
 __pycache__
 test_code/
+config.json
