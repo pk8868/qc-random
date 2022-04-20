@@ -105,6 +105,7 @@ def GenerateRandomFraction(accuracy):
     data = job.result().get_memory()
     return round(int(data[0], 2) / (2**accuracy - 1), GetRoundFactor(accuracy))
 
+buffer=[]
     
 def GenerateBuffer(accuracy,buffersize):
     assert accuracy > 1, "Accuracy must be higher than 1!"
