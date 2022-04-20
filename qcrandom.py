@@ -57,20 +57,29 @@ class _QCConfig:
     def __init__(self):
         self.logFile = 'qcrandom.log'
         self.exclusions = []
-        self.expireTime = 500
+        self.expireTime = 600
 
         self.LoadConfig()
         
     def LoadConfig(self):
         with open("config.json", "r") as file:
             config = json.load(file)
-            self.logFile = config['Log_File']
-            self.exclusions = config['Exclusions']
-            self.expireTime = config['Expire']
+            if 'Log_File' in config:
+                self.logFile = config['Log_File']
+			
+            if 'Exclusions' in config:
+                self.exclusions = config['Exclusions']
+
+            if 'Expire' in config:
+                self.expireTime = config['Expire']
 
 _qcconfig = _QCConfig()
 _qclogger = _QCLogging()
 _qcbackend = _QCBackend()
+
+
+def LoadConfig():
+    _qcconfig.LoadConfig()
 
 def GetRoundFactor(accuracy):
     return len(str(2**accuracy))
