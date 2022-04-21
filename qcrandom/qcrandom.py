@@ -4,6 +4,7 @@ from qiskit.tools.monitor import job_monitor
 import logging
 import time
 import json
+import os
 
 def ConfigCheck():
     try:
@@ -61,8 +62,24 @@ class _QCConfig:
 
         self.bufferSize = 100
         self.bufferAccuracy = 64
+        self.CreateFile()
         self.LoadConfig()
-        
+    
+    def CreateFile(self):
+        if not os.path.exists("config.json"):
+            newFile = {
+                "Expire": self.expireTime,
+                "Log_File": self.logFile,
+                "Exclusions": self.exclusions,
+
+                "Buffer": {
+                    "Size": self.bufferSize,
+                    "Accuracy": self.bufferAccuracy
+                }
+            }
+            with open("config.json", "w") as file:
+                file.write(json.dumps(newFile))
+
     def LoadConfig(self):
         with open("config.json", "r") as file:
             config = json.load(file)
