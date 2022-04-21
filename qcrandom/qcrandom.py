@@ -47,8 +47,6 @@ class _QCBackend:
         ConfigCheck()
         self.lastChange = time.time()
         self.backend = ChooseBackend()
-        self.task = None
-        self.routine = None
     def GetBackend(self):
         if (time.time() - self.lastChange > _qcconfig.expireTime):
             self.backend = ChooseBackend()
@@ -119,7 +117,6 @@ def GenerateBuffer(accuracy, buffersize):
         _qcbuffer.append(round(int(number, 2) / (2**accuracy - 1), GetRoundFactor(accuracy)))
 
 def CheckBufferState():
-    print(len(_qcbuffer))
     if len(_qcbuffer) == 0:
         GenerateBuffer(_qcconfig.bufferAccuracy, _qcconfig.bufferSize)
 
