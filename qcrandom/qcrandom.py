@@ -4,7 +4,6 @@ from qiskit.tools.monitor import job_monitor
 import logging
 import time
 import json
-import asyncio
 
 def ConfigCheck():
     try:
@@ -48,6 +47,8 @@ class _QCBackend:
         ConfigCheck()
         self.lastChange = time.time()
         self.backend = ChooseBackend()
+        self.task = None
+        self.routine = None
     def GetBackend(self):
         if (time.time() - self.lastChange > _qcconfig.expireTime):
             self.backend = ChooseBackend()
@@ -87,7 +88,6 @@ _qcconfig = _QCConfig()
 _qclogger = _QCLogging()
 _qcbackend = _QCBackend()
 _qcbuffer = []
-_qctask = None
 
 def LoadConfig():
     _qcconfig.LoadConfig()
@@ -95,7 +95,7 @@ def LoadConfig():
 def GetRoundFactor(accuracy):
     return len(str(2**accuracy))
 
-async def GenerateBuffer(accuracy, buffersize):
+def GenerateBuffer(accuracy, buffersize):
     assert accuracy > 1, "Accuracy must be higher than 1!"
     assert buffersize > 0, "Buffer size must be higher than 0!"
 
@@ -118,17 +118,15 @@ async def GenerateBuffer(accuracy, buffersize):
     for number in data:
         _qcbuffer.append(round(int(number, 2) / (2**accuracy - 1), GetRoundFactor(accuracy)))
 
-async def CheckBufferState():
-    if len(_qcbuffer) <= 0.1 * _qcconfig.bufferSize:
-        _qctask = asyncio.create_task(GenerateBuffer(_qcconfig.bufferAccuracy, _qcconfig.bufferSize))
-
+def CheckBufferState():
+    print(len(_qcbuffer))
     if len(_qcbuffer) == 0:
-        await _qctask
+        GenerateBuffer(_qcconfig.bufferAccuracy, _qcconfig.bufferSize)
 
 # Generates random number between 0 and 1
 def GenerateRandomFraction(accuracy):
     assert accuracy > 1, "Accuracy must be higher than 1!"
-    asyncio.run(CheckBufferState())
+    CheckBufferState()
     number = _qcbuffer[0]
     _qcbuffer.pop(0)
     return round(number, GetRoundFactor(accuracy))
