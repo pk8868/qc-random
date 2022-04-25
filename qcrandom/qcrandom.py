@@ -1,3 +1,4 @@
+from queue import Queue
 from qiskit import *
 from qiskit.providers.ibmq import least_busy
 from qiskit.tools.monitor import job_monitor
@@ -5,6 +6,7 @@ import logging
 import time
 import json
 import os
+import threading
 
 def ConfigCheck():
     try:
@@ -98,7 +100,6 @@ class _QCConfig:
                 if 'Accuracy' in config['Buffer']:
                     self.bufferAccuracy = config['Buffer']['Accuracy']
 
-
 _qcconfig = _QCConfig()
 _qclogger = _QCLogging()
 _qcbackend = _QCBackend()
@@ -122,20 +123,39 @@ def GenerateBuffer(accuracy, buffersize):
         circuit.h(0)
         circuit.measure(0, j)
         if j < accuracy - 1:
-            circuit.reset(0) 
-    
+            circuit.reset(0)
+            
     job = execute(circuit, _qcbackend.GetBackend(), shots=buffersize, memory=True)
     with open(_qcconfig.logFile, 'a') as file:
         file.write(time.asctime())
         job_monitor(job, interval=5, output=file)
 
     data = job.result().get_memory()
+
+    _qcthreading.buffer.clear()
     for number in data:
-        _qcbuffer.append(round(int(number, 2) / (2**accuracy - 1), GetRoundFactor(accuracy)))
+        _qcthreading.buffer.append(round(int(number, 2) / (2**accuracy - 1), GetRoundFactor(accuracy)))
+
+def _QCGenerateBuffer():
+    GenerateBuffer(_qcconfig.bufferAccuracy, _qcconfig.bufferSize)
+
+class _QCThreading:
+    def __init__(self):
+        self.thread = threading.Thread(target=_QCGenerateBuffer)
+        self.buffer = []
+    def newThread(self):
+        self.thread = threading.Thread(target=_QCGenerateBuffer)
+
+_qcthreading = _QCThreading()
 
 def CheckBufferState():
+    if len(_qcbuffer) < 0.1 * _qcconfig.bufferSize:
+        if not _qcthreading.thread.is_alive():
+            _qcthreading.newThread()
+            _qcthreading.thread.start()
     if len(_qcbuffer) == 0:
-        GenerateBuffer(_qcconfig.bufferAccuracy, _qcconfig.bufferSize)
+        _qcthreading.thread.join()
+        _qcbuffer.extend(_qcthreading.buffer)
 
 # Generates random number between 0 and 1
 def GenerateRandomFraction(accuracy):
