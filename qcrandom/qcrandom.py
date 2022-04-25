@@ -154,12 +154,13 @@ _qcthreading = _QCThreading()
 
 def CheckBufferState():
     if len(_qcbuffer) < _qcconfig.bufferRefill * _qcconfig.bufferSize:
-        if not _qcthreading.thread.is_alive():
+        if not _qcthreading.thread.is_alive() and len(_qcthreading.buffer) == 0:
             _qcthreading.newThread()
             _qcthreading.thread.start()
     if len(_qcbuffer) == 0:
         _qcthreading.thread.join()
         _qcbuffer.extend(_qcthreading.buffer)
+        _qcthreading.buffer.clear()
 
 # Generates random number between 0 and 1
 def GenerateRandomFraction(accuracy):
