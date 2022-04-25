@@ -101,7 +101,7 @@ class _QCConfig:
                     self.bufferSize = config['Buffer']['Size']
                 if 'Accuracy' in config['Buffer']:
                     self.bufferAccuracy = config['Buffer']['Accuracy']
-                if 'Accuracy' in config['Refill']:
+                if 'Refill' in config['Buffer']:
                     self.bufferRefill = config['Buffer']['Refill']
 
 _qcconfig = _QCConfig()
