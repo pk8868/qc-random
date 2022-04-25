@@ -64,6 +64,7 @@ class _QCConfig:
 
         self.bufferSize = 100
         self.bufferAccuracy = 64
+        self.bufferRefill = 0.1
         self.CreateFile()
         self.LoadConfig()
     
@@ -76,7 +77,8 @@ class _QCConfig:
 
                 "Buffer": {
                     "Size": self.bufferSize,
-                    "Accuracy": self.bufferAccuracy
+                    "Accuracy": self.bufferAccuracy,
+                    "Refill": self.bufferRefill
                 }
             }
             with open("config.json", "w") as file:
@@ -99,6 +101,8 @@ class _QCConfig:
                     self.bufferSize = config['Buffer']['Size']
                 if 'Accuracy' in config['Buffer']:
                     self.bufferAccuracy = config['Buffer']['Accuracy']
+                if 'Accuracy' in config['Refill']:
+                    self.bufferRefill = config['Buffer']['Refill']
 
 _qcconfig = _QCConfig()
 _qclogger = _QCLogging()
@@ -124,7 +128,7 @@ def GenerateBuffer(accuracy, buffersize):
         circuit.measure(0, j)
         if j < accuracy - 1:
             circuit.reset(0)
-            
+
     job = execute(circuit, _qcbackend.GetBackend(), shots=buffersize, memory=True)
     with open(_qcconfig.logFile, 'a') as file:
         file.write(time.asctime())
@@ -149,7 +153,7 @@ class _QCThreading:
 _qcthreading = _QCThreading()
 
 def CheckBufferState():
-    if len(_qcbuffer) < 0.1 * _qcconfig.bufferSize:
+    if len(_qcbuffer) < _qcconfig.bufferRefill * _qcconfig.bufferSize:
         if not _qcthreading.thread.is_alive():
             _qcthreading.newThread()
             _qcthreading.thread.start()
