@@ -14,10 +14,13 @@ def ConfigCheck():
         IBMQ.load_account()
         _qclogger.logger.info("Account loaded succesfully!")
     except:
-        _qclogger.logger.error("Loading failed! Loading from token.txt")
-        token = open("token.txt","r").readline()
-        IBMQ.save_account(token)
-        IBMQ.load_account()
+        try:
+            _qclogger.logger.error("Loading failed! Loading from token.txt")
+            token = open("token.txt","r").readline()
+            IBMQ.save_account(token)
+            IBMQ.load_account()
+        except:
+            _qclogger("Loading from token.txt failed!")
 
 def ChooseBackend(NotASimulator=False):
     try:
