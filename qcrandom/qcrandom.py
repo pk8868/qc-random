@@ -171,12 +171,12 @@ _qcthreading = _QCThreading()
 def CheckBufferState():
     assert _qcconfig.bufferRefill <= 1.0, "Buffer refill threshold must be lower or equal to 1!"
     assert _qcconfig.bufferRefill >= 0, "Buffer refill threshold must be higher or equal to 0!"
-    if len(_qcbuffer) <= _qcconfig.bufferRefill * _qcconfig.bufferSize:
+    if GetBufferSize() <= _qcconfig.bufferRefill * _qcconfig.bufferSize:
         if not _qcthreading.thread.is_alive() and len(_qcthreading.buffer) == 0:
-            _qclogger.logger.info(f"Second thread started work, main buffer size {len(_qcbuffer)}")
+            _qclogger.logger.info(f"Second thread started work, main buffer size {GetBufferSize()}")
             _qcthreading.newThread()
             _qcthreading.thread.start()
-    if len(_qcbuffer) == 0:
+    if GetBufferSize() == 0:
         _qcthreading.thread.join()
         _qcbuffer.extend(_qcthreading.buffer)
         _qcthreading.buffer.clear()
@@ -195,3 +195,6 @@ def QCRandom(left, right, accuracy=16):
     
     ret = GenerateRandomFraction(accuracy) * abs(right - left) + left
     return round(ret, GetRoundFactor(accuracy))
+
+def GetBufferSize():
+    return len(_qcbuffer)
