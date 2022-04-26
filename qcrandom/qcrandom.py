@@ -1,4 +1,3 @@
-from queue import Queue
 import sys
 from qiskit import *
 from qiskit.providers.ibmq import least_busy
@@ -43,14 +42,18 @@ class _QCLogging:
     def __init__(self):
         self.logger = logging.getLogger('QCLogger')
         self.formatter = logging.Formatter('%(asctime)s: %(levelname)s> %(message)s')
-        if _qcconfig.logFile == 'stdout':
-            self.fileHandler = logging.StreamHandler(sys.stdout)
-        else:
-            self.fileHandler = logging.FileHandler(_qcconfig.logFile)
-        self.fileHandler.setFormatter(self.formatter)
-        self.logger.addHandler(self.fileHandler)
+        self.UpdateHandler()
         self.logger.setLevel(logging.DEBUG)
-
+    def UpdateHandler(self):
+        for handler in self.logger.handlers[:]:
+                self.logger.removeHandler(handler)
+        if _qcconfig.logFile == 'stdout':
+            self.handler = logging.StreamHandler(sys.stdout)
+        else:
+            self.handler = logging.FileHandler(_qcconfig.logFile)
+        self.handler.setFormatter(self.formatter)
+        self.logger.addHandler(self.handler)
+        
 class _QCBackend:
     def __init__(self):
         ConfigCheck()
@@ -117,6 +120,8 @@ _qcbuffer = []
 
 def LoadConfig():
     _qcconfig.LoadConfig()
+    _qclogger.UpdateHandler()
+    
 
 def GetRoundFactor(accuracy):
     return len(str(2**accuracy))
