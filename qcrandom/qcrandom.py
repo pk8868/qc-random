@@ -162,16 +162,18 @@ class _QCThreading:
     def __init__(self):
         self.thread = threading.Thread(target=_QCGenerateBuffer)
         self.buffer = []
+        self.thread.start()
     def newThread(self):
         self.thread = threading.Thread(target=_QCGenerateBuffer)
 
 _qcthreading = _QCThreading()
 
 def CheckBufferState():
-    assert _qcconfig.bufferRefill < 1.0, "Buffer refill threshold must be lower than 1!"
+    assert _qcconfig.bufferRefill <= 1.0, "Buffer refill threshold must be lower or equal to 1!"
     assert _qcconfig.bufferRefill >= 0, "Buffer refill threshold must be higher or equal to 0!"
     if len(_qcbuffer) <= _qcconfig.bufferRefill * _qcconfig.bufferSize:
         if not _qcthreading.thread.is_alive() and len(_qcthreading.buffer) == 0:
+            _qclogger.logger.info(f"Second thread started work, main buffer size {len(_qcbuffer)}")
             _qcthreading.newThread()
             _qcthreading.thread.start()
     if len(_qcbuffer) == 0:
