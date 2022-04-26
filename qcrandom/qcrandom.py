@@ -45,8 +45,9 @@ class _QCLogging:
         self.UpdateHandler()
         self.logger.setLevel(logging.DEBUG)
     def UpdateHandler(self):
-        for handler in self.logger.handlers[:]:
-                self.logger.removeHandler(handler)
+        for handler in self.logger.handlers:
+            self.logger.removeHandler(handler)
+        
         if _qcconfig.logFile == 'stdout':
             self.handler = logging.StreamHandler(sys.stdout)
         else:
