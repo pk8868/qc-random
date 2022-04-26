@@ -156,7 +156,9 @@ class _QCThreading:
 _qcthreading = _QCThreading()
 
 def CheckBufferState():
-    if len(_qcbuffer) < _qcconfig.bufferRefill * _qcconfig.bufferSize:
+    assert _qcconfig.bufferRefill < 1.0, "Buffer refill threshold must be lower than 1!"
+    assert _qcconfig.bufferRefill >= 0, "Buffer refill threshold must be higher or equal to 0!"
+    if len(_qcbuffer) <= _qcconfig.bufferRefill * _qcconfig.bufferSize:
         if not _qcthreading.thread.is_alive() and len(_qcthreading.buffer) == 0:
             _qcthreading.newThread()
             _qcthreading.thread.start()
