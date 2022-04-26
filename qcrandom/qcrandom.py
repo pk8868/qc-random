@@ -74,7 +74,7 @@ class _QCConfig:
 
         self.bufferSize = 100
         self.bufferAccuracy = 64
-        self.bufferRefill = 0.1
+        self.bufferRefill = 0.5
         self.CreateFile()
         self.LoadConfig()
     
