@@ -1,4 +1,5 @@
 from queue import Queue
+import sys
 from qiskit import *
 from qiskit.providers.ibmq import least_busy
 from qiskit.tools.monitor import job_monitor
@@ -41,10 +42,12 @@ def ChooseBackend(NotASimulator=False):
 class _QCLogging:
     def __init__(self):
         self.logger = logging.getLogger('QCLogger')
-        self.fileHandler = logging.FileHandler(_qcconfig.logFile)
         self.formatter = logging.Formatter('%(asctime)s: %(levelname)s> %(message)s')
+        if _qcconfig.logFile == 'stdout':
+            self.fileHandler = logging.StreamHandler(sys.stdout)
+        else:
+            self.fileHandler = logging.FileHandler(_qcconfig.logFile)
         self.fileHandler.setFormatter(self.formatter)
-
         self.logger.addHandler(self.fileHandler)
         self.logger.setLevel(logging.DEBUG)
 
@@ -133,9 +136,12 @@ def GenerateBuffer(accuracy, buffersize):
             circuit.reset(0)
 
     job = execute(circuit, _qcbackend.GetBackend(), shots=buffersize, memory=True)
-    with open(_qcconfig.logFile, 'a') as file:
-        file.write(time.asctime())
-        job_monitor(job, interval=5, output=file)
+    if _qcconfig.logFile == 'stdout':
+        job_monitor(job, interval=5, output=sys.stdout)
+    else:
+        with open(_qcconfig.logFile, 'a') as file:
+            file.write(time.asctime())
+            job_monitor(job, interval=5, output=file)
 
     data = job.result().get_memory()
 
