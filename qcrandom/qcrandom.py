@@ -10,11 +10,14 @@ import threading
 
 def ConfigCheck():
     try:
+        # try loading an account
+        # works only if account was previously saved
         _qclogger.logger.info("Loading account...")
         IBMQ.load_account()
         _qclogger.logger.info("Account loaded succesfully!")
     except Exception:
         try:
+            # try loading an account using token in token.txt
             _qclogger.logger.error("Loading failed! Loading from token.txt")
             token = ""
             with open("token.txt","r") as tokenFile:
@@ -29,10 +32,11 @@ def ChooseBackend(NotASimulator=False):
     try:
         _qclogger.logger.info("Selecting backend...")
         provider = IBMQ.get_provider(hub='ibm-q')
+        # lambda filters backends without reset gate and exclusions from configuration file
         servers = provider.backends(filters=lambda b: "reset" in b.configuration().basis_gates and not b.configuration().backend_name in _qcconfig.exclusions, simulator=False, operational=True)
         leastbusy = least_busy(servers)
-        backend = provider.get_backend("{}".format(leastbusy))
-        _qclogger.logger.info("Selected {}!".format(leastbusy))
+        backend = provider.get_backend(f"{leastbusy}")
+        _qclogger.logger.info(f"Selected {leastbusy}!")
     except Exception:
         _qclogger.logger.error("Selecting backend failed!")
         if NotASimulator == True:
@@ -48,9 +52,11 @@ class _QCLogging:
         self.UpdateHandler()
         self.logger.setLevel(logging.DEBUG)
     def UpdateHandler(self):
+        # remove all logging handlers
         for handler in self.logger.handlers:
             self.logger.removeHandler(handler)
         
+        # select new handlers
         if _qcconfig.logFile == 'stdout':
             self.handler = logging.StreamHandler(sys.stdout)
         else:
@@ -64,6 +70,7 @@ class _QCBackend:
         self.lastChange = time.time()
         self.backend = ChooseBackend()
     def GetBackend(self):
+        # if backend has expired choose a new backend
         if (time.time() - self.lastChange > _qcconfig.expireTime):
             self.backend = ChooseBackend()
             self.lastChange = time.time()
@@ -134,6 +141,7 @@ def GenerateBuffer(accuracy, buffersize):
     assert accuracy > 1, "Accuracy must be higher than 1!"
     assert buffersize > 0, "Buffer size must be higher than 0!"
 
+    # creating a quantum circuit
     qr = QuantumRegister(1)
     cr = ClassicalRegister(accuracy)
     circuit = QuantumCircuit(qr, cr)
@@ -141,6 +149,7 @@ def GenerateBuffer(accuracy, buffersize):
     for j in range(accuracy):
         circuit.h(0)
         circuit.measure(0, j)
+        # skipping last reset (it doesn't change anything)
         if j < accuracy - 1:
             circuit.reset(0)
 
@@ -154,10 +163,12 @@ def GenerateBuffer(accuracy, buffersize):
 
     data = job.result().get_memory()
 
+    # clear the buffer and fill it with new data
     _qcthreading.buffer.clear()
     for number in data:
         _qcthreading.buffer.append(round(int(number, 2) / (2**accuracy - 1), GetRoundFactor(accuracy)))
 
+# wrapper around GenerateBuffer with accuracy and size specified in _qcconfig
 def _QCGenerateBuffer():
     GenerateBuffer(_qcconfig.bufferAccuracy, _qcconfig.bufferSize)
 
@@ -174,11 +185,14 @@ _qcthreading = _QCThreading()
 def CheckBufferState():
     assert _qcconfig.bufferRefill <= 1.0, "Buffer refill threshold must be lower or equal to 1!"
     assert _qcconfig.bufferRefill >= 0, "Buffer refill threshold must be higher or equal to 0!"
+    
     if GetBufferSize() <= _qcconfig.bufferRefill * _qcconfig.bufferSize:
+        # start the second thread only if it isn't working and secondary buffer is empty
         if not _qcthreading.thread.is_alive() and len(_qcthreading.buffer) == 0:
             _qclogger.logger.info(f"Second thread started working, main buffer size {GetBufferSize()}")
             _qcthreading.newThread()
             _qcthreading.thread.start()
+    # refill main buffer when it's empty
     if GetBufferSize() == 0:
         _qcthreading.thread.join()
         _qcbuffer.extend(_qcthreading.buffer)
