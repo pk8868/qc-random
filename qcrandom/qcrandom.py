@@ -13,7 +13,7 @@ def ConfigCheck():
         _qclogger.logger.info("Loading account...")
         IBMQ.load_account()
         _qclogger.logger.info("Account loaded succesfully!")
-    except:
+    except Exception:
         try:
             _qclogger.logger.error("Loading failed! Loading from token.txt")
             token = ""
@@ -22,7 +22,7 @@ def ConfigCheck():
             
             IBMQ.save_account(token)
             IBMQ.load_account()
-        except:
+        except Exception:
             _qclogger.logger.error("Loading from token.txt failed!")
 
 def ChooseBackend(NotASimulator=False):
@@ -33,10 +33,10 @@ def ChooseBackend(NotASimulator=False):
         leastbusy = least_busy(servers)
         backend = provider.get_backend("{}".format(leastbusy))
         _qclogger.logger.info("Selected {}!".format(leastbusy))
-    except:
+    except Exception:
         _qclogger.logger.error("Selecting backend failed!")
         if NotASimulator == True:
-            backend = "No quantum computer is available"
+            raise Exception("No quantum computer is available")
         else:
             backend = BasicAer.get_backend("qasm_simulator")
     return backend
