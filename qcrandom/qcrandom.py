@@ -16,7 +16,10 @@ def ConfigCheck():
     except:
         try:
             _qclogger.logger.error("Loading failed! Loading from token.txt")
-            token = open("token.txt","r").readline()
+            token = ""
+            with open("token.txt","r") as tokenFile:
+                token = tokenFile.readline()
+            
             IBMQ.save_account(token)
             IBMQ.load_account()
         except:
