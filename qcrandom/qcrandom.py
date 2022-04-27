@@ -121,6 +121,10 @@ _qclogger = _QCLogging()
 _qcbackend = _QCBackend()
 _qcbuffer = []
 
+# Returns main buffer's size
+def GetBufferSize():
+    return len(_qcbuffer)
+    
 # User interface for updating configuration file, updates logging file
 def LoadConfig():
     _qcconfig.LoadConfig()
@@ -225,7 +229,3 @@ def QCRandom(left, right, accuracy=16):
     
     ret = GenerateRandomFraction(accuracy) * abs(right - left) + left
     return round(ret, GetRoundFactor(accuracy))
-
-# Returns main buffer's size
-def GetBufferSize():
-    return len(_qcbuffer)
