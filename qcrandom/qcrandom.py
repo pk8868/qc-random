@@ -19,13 +19,12 @@ def ConfigCheck():
         try:
             # try loading an account using token in token.txt
             _qclogger.logger.error("Loading failed! Loading from token.txt")
-            token = ""
             with open("token.txt","r") as tokenFile:
                 token = tokenFile.readline()
-            
-            IBMQ.save_account(token)
-            IBMQ.load_account()
+                IBMQ.save_account(token)
+                IBMQ.load_account()
         except Exception:
+            # loading account failed - working without ibmq provider
             _qclogger.logger.error("Loading from token.txt failed!")
 
 def ChooseBackend(NotASimulator=False):
@@ -35,28 +34,27 @@ def ChooseBackend(NotASimulator=False):
         # lambda filters backends without reset gate and exclusions from configuration file
         servers = provider.backends(filters=lambda b: "reset" in b.configuration().basis_gates and not b.configuration().backend_name in _qcconfig.exclusions, simulator=False, operational=True)
         leastbusy = least_busy(servers)
-        backend = provider.get_backend(f"{leastbusy}")
         _qclogger.logger.info(f"Selected {leastbusy}!")
+        return leastbusy
     except Exception:
         _qclogger.logger.error("Selecting backend failed!")
-        if NotASimulator == True:
+        if NotASimulator:
             raise Exception("No quantum computer is available")
         else:
-            backend = BasicAer.get_backend("qasm_simulator")
-    return backend
+            return BasicAer.get_backend("qasm_simulator")
 
 class _QCLogging:
     def __init__(self):
         self.logger = logging.getLogger('QCLogger')
+        self.logger.setLevel(logging.DEBUG)
         self.formatter = logging.Formatter('%(asctime)s: %(levelname)s> %(message)s')
         self.UpdateHandler()
-        self.logger.setLevel(logging.DEBUG)
     def UpdateHandler(self):
         # remove all logging handlers
         for handler in self.logger.handlers:
             self.logger.removeHandler(handler)
         
-        # select new handlers
+        # select new handler
         if _qcconfig.logFile == 'stdout':
             self.handler = logging.StreamHandler(sys.stdout)
         else:
@@ -88,22 +86,16 @@ class _QCConfig:
         self.CreateFile()
         self.LoadConfig()
     
+    # Creates configuration file
     def CreateFile(self):
         if not os.path.exists("config.json"):
             newFile = {
-                "Expire": self.expireTime,
-                "Log_File": self.logFile,
-                "Exclusions": self.exclusions,
-
-                "Buffer": {
-                    "Size": self.bufferSize,
-                    "Accuracy": self.bufferAccuracy,
-                    "Refill": self.bufferRefill
-                }
+                "Log_File": self.logFile
             }
             with open("config.json", "w") as file:
                 file.write(json.dumps(newFile))
 
+    # Loads values from config.json
     def LoadConfig(self):
         with open("config.json", "r") as file:
             config = json.load(file)
@@ -129,14 +121,16 @@ _qclogger = _QCLogging()
 _qcbackend = _QCBackend()
 _qcbuffer = []
 
+# User interface for updating configuration file, updates logging file
 def LoadConfig():
     _qcconfig.LoadConfig()
     _qclogger.UpdateHandler()
     
-
+# Returns number of digits the random number will be rounded to
 def GetRoundFactor(accuracy):
     return len(str(2**accuracy))
 
+# Fills secondary buffer
 def GenerateBuffer(accuracy, buffersize):
     assert accuracy > 1, "Accuracy must be higher than 1!"
     assert buffersize > 0, "Buffer size must be higher than 0!"
@@ -174,38 +168,57 @@ def _QCGenerateBuffer():
 
 class _QCThreading:
     def __init__(self):
-        self.thread = threading.Thread(target=_QCGenerateBuffer)
         self.buffer = []
-        self.thread.start()
-    def newThread(self):
+        self.startGenerating()
+    # Main function that starts fetching numbers in the background
+    def startGenerating(self):
+        _qclogger.logger.info(f"Second thread started working, main buffer size {GetBufferSize()}")
         self.thread = threading.Thread(target=_QCGenerateBuffer)
+        self.thread.start()
+        _qclogger.logger.info(f"Second thread completed working, main buffer size {GetBufferSize()}, secondary buffer size {len(self.buffer)}")
+    # The thread is ready if it isn't working and secondary buffer is empty
+    def isReady(self):
+        return not self.thread.is_alive() and len(self.buffer) == 0
+    # Copies values from secondary buffer to the main buffer
+    def copyBuffer(self):
+        self.thread.join()
+        _qcbuffer.extend(_qcthreading.buffer)
+        self.buffer.clear()
+
 
 _qcthreading = _QCThreading()
 
+# Calculates refill threshold as number of items
+def GetRefillThreshold():
+    return int(_qcconfig.bufferRefill * _qcconfig.bufferSize)
+
+# Returns first number from the buffer and pops it off
+def GetNumber():
+    number = _qcbuffer[0]
+    _qcbuffer.pop(0)
+    return number
+
+# Starts second thread / copies values from secondary bufer to the main buffer
 def CheckBufferState():
     assert _qcconfig.bufferRefill <= 1.0, "Buffer refill threshold must be lower or equal to 1!"
     assert _qcconfig.bufferRefill >= 0, "Buffer refill threshold must be higher or equal to 0!"
     
-    if GetBufferSize() <= _qcconfig.bufferRefill * _qcconfig.bufferSize:
+    if GetBufferSize() <= GetRefillThreshold():
         # start the second thread only if it isn't working and secondary buffer is empty
-        if not _qcthreading.thread.is_alive() and len(_qcthreading.buffer) == 0:
-            _qclogger.logger.info(f"Second thread started working, main buffer size {GetBufferSize()}")
-            _qcthreading.newThread()
-            _qcthreading.thread.start()
+        if _qcthreading.isReady():
+            _qcthreading.startGenerating()
     # refill main buffer when it's empty
     if GetBufferSize() == 0:
-        _qcthreading.thread.join()
-        _qcbuffer.extend(_qcthreading.buffer)
-        _qcthreading.buffer.clear()
+        _qcthreading.copyBuffer()
 
-# Generates random number between 0 and 1
+# Generates random number between 0 and 1 (QCRandom helper function)
 def GenerateRandomFraction(accuracy):
     assert accuracy > 1, "Accuracy must be higher than 1!"
     CheckBufferState()
-    number = _qcbuffer[0]
-    _qcbuffer.pop(0)
+    number = GetNumber()
     return round(number, GetRoundFactor(accuracy))
 
+# Main interface - generates random numbers between left and right
 def QCRandom(left, right, accuracy=16):
     assert accuracy > 1, "Accuracy must be higher than 1!"
     assert left < right, "Left must be lower than right!"
@@ -213,5 +226,6 @@ def QCRandom(left, right, accuracy=16):
     ret = GenerateRandomFraction(accuracy) * abs(right - left) + left
     return round(ret, GetRoundFactor(accuracy))
 
+# Returns main buffer's size
 def GetBufferSize():
     return len(_qcbuffer)
