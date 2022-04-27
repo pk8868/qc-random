@@ -5,6 +5,7 @@
 
     "Buffer": {
         "Size": 100,
-        "Accuracy": 64
+        "Accuracy": 64,
+        "Refill": 0.5
     }
 }
