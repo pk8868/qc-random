@@ -1,6 +1,6 @@
 {
     "Expire": 600,
-    "Log_File": "qcrandom.log",
+    "Log_File": ["qcrandom.log"],
     "Exclusions": [],
 
     "Buffer": {

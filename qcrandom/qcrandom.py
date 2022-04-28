@@ -7,6 +7,7 @@ import time
 import json
 import os
 import threading
+import io
 
 def ConfigCheck():
     try:
@@ -48,19 +49,28 @@ class _QCLogging:
         self.logger = logging.getLogger('QCLogger')
         self.logger.setLevel(logging.DEBUG)
         self.formatter = logging.Formatter('%(asctime)s: %(levelname)s> %(message)s')
+        self.handlers = []
         self.UpdateHandler()
     def UpdateHandler(self):
         # remove all logging handlers
         for handler in self.logger.handlers:
             self.logger.removeHandler(handler)
-        
+
         # select new handler
-        if _qcconfig.logFile == 'stdout':
-            self.handler = logging.StreamHandler(sys.stdout)
-        else:
-            self.handler = logging.FileHandler(_qcconfig.logFile)
-        self.handler.setFormatter(self.formatter)
-        self.logger.addHandler(self.handler)
+        self.FillHandlers()
+        
+        for handler in self.handlers:
+            self.logger.addHandler(handler)
+    def FillHandlers(self):
+        self.handlers.clear()
+
+        for file in _qcconfig.logFile:
+            if file == 'stdout':
+                self.handlers.append(logging.StreamHandler(sys.stdout))
+            else:
+                self.handlers.append(logging.FileHandler(file))
+        for handler in self.handlers:
+            handler.setFormatter(self.formatter)
         
 class _QCBackend:
     def __init__(self):
@@ -76,7 +86,7 @@ class _QCBackend:
 
 class _QCConfig:
     def __init__(self):
-        self.logFile = 'qcrandom.log'
+        self.logFile = ['qcrandom.log']
         self.exclusions = []
         self.expireTime = 600
 
@@ -115,6 +125,11 @@ class _QCConfig:
                     self.bufferAccuracy = config['Buffer']['Accuracy']
                 if 'Refill' in config['Buffer']:
                     self.bufferRefill = config['Buffer']['Refill']
+        self.CheckConfig()
+
+    def CheckConfig(self):
+        if isinstance(self.logFile, str):
+            self.logFile = [self.logFile]
 
 _qcconfig = _QCConfig()
 _qclogger = _QCLogging()
@@ -152,12 +167,10 @@ def GenerateBuffer(accuracy, buffersize):
             circuit.reset(0)
 
     job = execute(circuit, _qcbackend.GetBackend(), shots=buffersize, memory=True)
-    if _qcconfig.logFile == 'stdout':
-        job_monitor(job, interval=5, output=sys.stdout)
-    else:
-        with open(_qcconfig.logFile, 'a') as file:
-            file.write(time.asctime())
-            job_monitor(job, interval=5, output=file)
+   
+    stream = io.StringIO("")
+    job_monitor(job, interval=5, output=stream)
+    _qclogger.logger.info(stream.getvalue())
 
     data = job.result().get_memory()
 
@@ -165,6 +178,7 @@ def GenerateBuffer(accuracy, buffersize):
     _qcthreading.buffer.clear()
     for number in data:
         _qcthreading.buffer.append(round(int(number, 2) / (2**accuracy - 1), GetRoundFactor(accuracy)))
+    _qclogger.logger.info(f"Second thread finished working, main buffer size {GetBufferSize()}, secondary buffer size {len(_qcthreading.buffer)}")
 
 # wrapper around GenerateBuffer with accuracy and size specified in _qcconfig
 def _QCGenerateBuffer():
@@ -179,7 +193,6 @@ class _QCThreading:
         _qclogger.logger.info(f"Second thread started working, main buffer size {GetBufferSize()}")
         self.thread = threading.Thread(target=_QCGenerateBuffer)
         self.thread.start()
-        _qclogger.logger.info(f"Second thread completed working, main buffer size {GetBufferSize()}, secondary buffer size {len(self.buffer)}")
     # The thread is ready if it isn't working and secondary buffer is empty
     def isReady(self):
         return not self.thread.is_alive() and len(self.buffer) == 0
