@@ -59,6 +59,7 @@ class _QCLogging:
         # select new handler
         self.FillHandlers()
         
+        # add handlers to logger
         for handler in self.handlers:
             self.logger.addHandler(handler)
     def FillHandlers(self):
@@ -67,8 +68,11 @@ class _QCLogging:
         for file in _qcconfig.logFile:
             if file == 'stdout':
                 self.handlers.append(logging.StreamHandler(sys.stdout))
+            elif file == 'stderr':
+                self.handlers.append(logging.StreamHandler(sys.stderr))
             else:
                 self.handlers.append(logging.FileHandler(file))
+                
         for handler in self.handlers:
             handler.setFormatter(self.formatter)
         
@@ -168,6 +172,7 @@ def GenerateBuffer(accuracy, buffersize):
 
     job = execute(circuit, _qcbackend.GetBackend(), shots=buffersize, memory=True)
    
+    # Save the results of job_monitor to temporary string stream
     stream = io.StringIO("")
     job_monitor(job, interval=5, output=stream)
     _qclogger.logger.info(stream.getvalue())
