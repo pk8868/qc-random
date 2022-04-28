@@ -1,0 +1,9 @@
+{
+    "Expire": 600,
+    "LogFiles": ["qcrandom.log"],
+    "Exclusions": [],
+
+    "BufferSize": 100,
+    "BufferAccuracy": 64,
+    "BufferRefill": 0.5
+}

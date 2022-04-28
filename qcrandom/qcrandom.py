@@ -33,7 +33,7 @@ def ChooseBackend(NotASimulator=False):
         _qclogger.logger.info("Selecting backend...")
         provider = IBMQ.get_provider(hub='ibm-q')
         # lambda filters backends without reset gate and exclusions from configuration file
-        servers = provider.backends(filters=lambda b: "reset" in b.configuration().basis_gates and not b.configuration().backend_name in _qcconfig.exclusions, simulator=False, operational=True)
+        servers = provider.backends(filters=lambda b: "reset" in b.configuration().basis_gates and not b.configuration().backend_name in _qcconfig.Exclusions, simulator=False, operational=True)
         leastbusy = least_busy(servers)
         _qclogger.logger.info(f"Selected {leastbusy}!")
         return leastbusy
@@ -65,7 +65,7 @@ class _QCLogging:
     def FillHandlers(self):
         self.handlers.clear()
 
-        for file in _qcconfig.logFile:
+        for file in _qcconfig.LogFiles:
             if file == 'stdout':
                 self.handlers.append(logging.StreamHandler(sys.stdout))
             elif file == 'stderr':
@@ -83,57 +83,44 @@ class _QCBackend:
         self.backend = ChooseBackend()
     def GetBackend(self):
         # if backend has expired choose a new backend
-        if (time.time() - self.lastChange > _qcconfig.expireTime):
+        if (time.time() - self.lastChange > _qcconfig.Expire):
             self.backend = ChooseBackend()
             self.lastChange = time.time()
         return self.backend
 
 class _QCConfig:
     def __init__(self):
-        self.logFile = ['qcrandom.log']
-        self.exclusions = []
-        self.expireTime = 600
+        # Setting default values
+        self.LogFiles = ['qcrandom.log']
+        self.Exclusions = []
+        self.Expire = 600
 
-        self.bufferSize = 100
-        self.bufferAccuracy = 64
-        self.bufferRefill = 0.5
+        self.BufferSize = 100
+        self.BufferAccuracy = 64
+        self.BufferRefill = 0.5
         self.CreateFile()
         self.LoadConfig()
     
     # Creates configuration file
     def CreateFile(self):
         if not os.path.exists("config.json"):
-            with open("config.json", "w") as file:
+            with open("qcconfig.json", "w") as file:
                 # self.dict creates a dictionary with all attributes, have to be careful when adding new ones
                 file.write(json.dumps(self.__dict__))
 
     # Loads values from config.json
     def LoadConfig(self):
-        with open("config.json", "r") as file:
+        with open("qcconfig.json", "r") as file:
             config = json.load(file)
-            if 'Log_File' in config:
-                self.logFile = config['Log_File']
-			
-            if 'Exclusions' in config:
-                self.exclusions = config['Exclusions']
-
-            if 'Expire' in config:
-                self.expireTime = config['Expire']
-
-            if 'Buffer' in config:
-                buffer = config['Buffer']
-                if 'Size' in buffer:
-                    self.bufferSize = buffer['Size']
-                if 'Accuracy' in buffer:
-                    self.bufferAccuracy = buffer['Accuracy']
-                if 'Refill' in buffer:
-                    self.bufferRefill = buffer['Refill']
+            # Check if keys are the same in _QCConfig and config.json
+            if [key in config.keys() for key in self.__dict__.keys()]:
+                self.__dict__ = config
         self.CheckConfig()
 
     def CheckConfig(self):
         # Change to list of files // for backwards compatibility
-        if isinstance(self.logFile, str):
-            self.logFile = [self.logFile]
+        if isinstance(self.LogFiles, str):
+            self.LogFiles = [self.LogFiles]
 
 _qcconfig = _QCConfig()
 _qclogger = _QCLogging()
@@ -187,7 +174,7 @@ def GenerateBuffer(accuracy, buffersize):
 
 # wrapper around GenerateBuffer with accuracy and size specified in _qcconfig
 def _QCGenerateBuffer():
-    GenerateBuffer(_qcconfig.bufferAccuracy, _qcconfig.bufferSize)
+    GenerateBuffer(_qcconfig.BufferAccuracy, _qcconfig.BufferSize)
 
 class _QCThreading:
     def __init__(self):
@@ -212,7 +199,7 @@ _qcthreading = _QCThreading()
 
 # Calculates refill threshold as number of items
 def GetRefillThreshold():
-    return int(_qcconfig.bufferRefill * _qcconfig.bufferSize)
+    return int(_qcconfig.BufferRefill * _qcconfig.BufferSize)
 
 # Returns first number from the buffer and pops it off
 def GetNumber():
@@ -222,8 +209,8 @@ def GetNumber():
 
 # Starts second thread / copies values from secondary bufer to the main buffer
 def CheckBufferState():
-    assert _qcconfig.bufferRefill <= 1.0, "Buffer refill threshold must be lower or equal to 1!"
-    assert _qcconfig.bufferRefill >= 0, "Buffer refill threshold must be higher or equal to 0!"
+    assert _qcconfig.BufferRefill <= 1.0, "Buffer refill threshold must be lower or equal to 1!"
+    assert _qcconfig.BufferRefill >= 0, "Buffer refill threshold must be higher or equal to 0!"
     
     if GetBufferSize() <= GetRefillThreshold():
         # start the second thread only if it isn't working and secondary buffer is empty
