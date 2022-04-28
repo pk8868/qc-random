@@ -112,9 +112,10 @@ class _QCConfig:
     def LoadConfig(self):
         with open("qcconfig.json", "r") as file:
             config = json.load(file)
-            # Check if keys are the same in _QCConfig and config.json
-            if [key in config.keys() for key in self.__dict__.keys()]:
-                self.__dict__ = config
+            # Copy same keys to _QCConfig from config file
+            for key in config.keys():
+                if key in self.__dict__.keys():
+                    self.__dict__[key] = config[key] 
         self.CheckConfig()
 
     def CheckConfig(self):
