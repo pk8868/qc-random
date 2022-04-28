@@ -103,11 +103,8 @@ class _QCConfig:
     # Creates configuration file
     def CreateFile(self):
         if not os.path.exists("config.json"):
-            newFile = {
-                "Log_File": self.logFile
-            }
             with open("config.json", "w") as file:
-                file.write(json.dumps(newFile))
+                file.write(json.dumps(self.__dict__))
 
     # Loads values from config.json
     def LoadConfig(self):
