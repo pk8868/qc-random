@@ -104,6 +104,7 @@ class _QCConfig:
     def CreateFile(self):
         if not os.path.exists("config.json"):
             with open("config.json", "w") as file:
+                # self.dict creates a dictionary with all attributes, have to be careful when adding new ones
                 file.write(json.dumps(self.__dict__))
 
     # Loads values from config.json
@@ -120,15 +121,17 @@ class _QCConfig:
                 self.expireTime = config['Expire']
 
             if 'Buffer' in config:
-                if 'Size' in config['Buffer']:
-                    self.bufferSize = config['Buffer']['Size']
-                if 'Accuracy' in config['Buffer']:
-                    self.bufferAccuracy = config['Buffer']['Accuracy']
-                if 'Refill' in config['Buffer']:
-                    self.bufferRefill = config['Buffer']['Refill']
+                buffer = config['Buffer']
+                if 'Size' in buffer:
+                    self.bufferSize = buffer['Size']
+                if 'Accuracy' in buffer:
+                    self.bufferAccuracy = buffer['Accuracy']
+                if 'Refill' in buffer:
+                    self.bufferRefill = buffer['Refill']
         self.CheckConfig()
 
     def CheckConfig(self):
+        # Change to list of files // for backwards compatibility
         if isinstance(self.logFile, str):
             self.logFile = [self.logFile]
 
