@@ -128,8 +128,12 @@ _qclogger = _QCLogging()
 _qcbackend = _QCBackend()
 _qcbuffer = []
 
+# Returns sum of main buffer's size and secondary buffer's size
+def GetNumberCount():
+    return len(_qcbuffer) + len(_qcthreading.buffer)
+
 # Returns main buffer's size
-def GetBufferSize():
+def GetMainBufferSize():
     return len(_qcbuffer)
     
 # User interface for updating configuration file, updates logging file
@@ -171,7 +175,7 @@ def GenerateBuffer(accuracy, buffersize):
     _qcthreading.buffer.clear()
     for number in data:
         _qcthreading.buffer.append(round(int(number, 2) / (2**accuracy - 1), GetRoundFactor(accuracy)))
-    _qclogger.logger.info(f"Second thread finished working, main buffer size {GetBufferSize()}, secondary buffer size {len(_qcthreading.buffer)}")
+    _qclogger.logger.info(f"Second thread finished working, main buffer size {GetMainBufferSize()}, secondary buffer size {len(_qcthreading.buffer)}")
 
 # wrapper around GenerateBuffer with accuracy and size specified in _qcconfig
 def _QCGenerateBuffer():
@@ -183,7 +187,7 @@ class _QCThreading:
         self.startGenerating()
     # Main function that starts fetching numbers in the background
     def startGenerating(self):
-        _qclogger.logger.info(f"Second thread started working, main buffer size {GetBufferSize()}")
+        _qclogger.logger.info(f"Second thread started working, main buffer size {GetMainBufferSize()}")
         self.thread = threading.Thread(target=_QCGenerateBuffer)
         self.thread.start()
     # The thread is ready if it isn't working and secondary buffer is empty
@@ -213,12 +217,12 @@ def CheckBufferState():
     assert _qcconfig.BufferRefill <= 1.0, "Buffer refill threshold must be lower or equal to 1!"
     assert _qcconfig.BufferRefill >= 0, "Buffer refill threshold must be higher or equal to 0!"
     
-    if GetBufferSize() <= GetRefillThreshold():
+    if GetMainBufferSize() <= GetRefillThreshold():
         # start the second thread only if it isn't working and secondary buffer is empty
         if _qcthreading.isReady():
             _qcthreading.startGenerating()
     # refill main buffer when it's empty
-    if GetBufferSize() == 0:
+    if GetMainBufferSize() == 0:
         _qcthreading.copyBuffer()
 
 # Generates random number between 0 and 1 (QCRandom helper function)
