@@ -10,6 +10,3 @@ Check out our [Wiki page](https://github.com/pk8868/qc-random/wiki)!
 
 ## Any problems?
 If you find a bug, feel free to post an [issue](https://github.com/pk8868/qc-random/issues)!
-
-## Flask app
-Our flask app is available in [qcrandom-flask](https://github.com/Pomarancz789/qcrandom-flask) repository!
