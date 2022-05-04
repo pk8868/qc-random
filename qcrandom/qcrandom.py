@@ -82,7 +82,7 @@ class _QCBackend:
         self.lastChange = time.time()
         self.backend = ChooseBackend()
     def GetBackend(self):
-        # choosing backends is time-expensive, so we limit it by reusing same backend while it didn't expire
+        # choosing backends is time-expensive, so we limit it by reusing same backend until it expired
         # expiration time is specified as seconds
         # if backend has expired choose a new backend
         if (time.time() - self.lastChange > _qcconfig.Expire):
