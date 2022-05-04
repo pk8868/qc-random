@@ -46,7 +46,7 @@ def ChooseBackend(NotASimulator=False):
         if NotASimulator:
             raise RuntimeError("No quantum computer is available")
         else:
-            _qclogger.logger.error("Using local simulator! Numbers won't be truly random!")
+            _qclogger.logger.warning("Using local simulator! Numbers won't be truly random!")
             return BasicAer.get_backend("qasm_simulator")
 
 class _QCLogging:
