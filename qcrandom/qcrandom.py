@@ -114,7 +114,8 @@ class _QCConfig:
     # Creates configuration file (if it doesn't exist)
     def CreateFile(self):
         if not os.path.exists("config.json"):
-            _qclogger.logger.info("Couldn't find config.json! Creating new config.json!")
+            # Using print, becouse _QCConfig is initialized before _QCLogger
+            print("Couldn't find config.json! Creating new config.json!")
             with open("config.json", "w") as file:
                 # self.dict creates a dictionary with all attributes, have to be careful when adding new ones
                 file.write(json.dumps(self.__dict__))
