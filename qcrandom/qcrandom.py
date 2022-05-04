@@ -9,6 +9,7 @@ import os
 import threading
 import io
 
+
 def ConfigCheck():
     try:
         # try loading an account
@@ -24,16 +25,19 @@ def ConfigCheck():
                 token = tokenFile.readline()
                 IBMQ.save_account(token)
                 IBMQ.load_account()
+                _qclogger.logger.info("Successfully loaded account from token.txt!")
         except Exception:
             # loading account failed - working without ibmq provider
             _qclogger.logger.error("Loading from token.txt failed!")
 
+# Selects backend device
 def ChooseBackend(NotASimulator=False):
     try:
         _qclogger.logger.info("Selecting backend...")
         provider = IBMQ.get_provider(hub='ibm-q')
         # lambda filters backends without reset gate and exclusions from configuration file
-        servers = provider.backends(filters=lambda b: "reset" in b.configuration().basis_gates and not b.configuration().backend_name in _qcconfig.Exclusions, simulator=False, operational=True)
+        servers = provider.backends(filters=lambda b: "reset" in b.configuration().basis_gates and not b.configuration().backend_name in _qcconfig.BackendExclusions, simulator=False, operational=True)
+        # select least busy server
         leastbusy = least_busy(servers)
         _qclogger.logger.info(f"Selected {leastbusy}!")
         return leastbusy
@@ -42,6 +46,7 @@ def ChooseBackend(NotASimulator=False):
         if NotASimulator:
             raise RuntimeError("No quantum computer is available")
         else:
+            _qclogger.logger.error("Using local simulator! Numbers won't be truly random!")
             return BasicAer.get_backend("qasm_simulator")
 
 class _QCLogging:
@@ -85,27 +90,31 @@ class _QCBackend:
         # choosing backends is time-expensive, so we limit it by reusing same backend until it expired
         # expiration time is specified as seconds
         # if backend has expired choose a new backend
-        if (time.time() - self.lastChange > _qcconfig.Expire):
+        if (time.time() - self.lastChange > _qcconfig.BackendExpireTime):
             self.backend = ChooseBackend()
             self.lastChange = time.time()
         return self.backend
 
 class _QCConfig:
     def __init__(self):
-        # Setting default values
+        self.LoadDefaultValues()
+        self.CreateFile()
+        self.LoadConfig()
+    
+    # Set default values
+    def LoadDefaultValues(self):
         self.LogFiles = ['qcrandom.log']
-        self.Exclusions = []
-        self.Expire = 600
+        self.BackendExclusions = []
+        self.BackendExpireTime = 600
 
         self.BufferSize = 100
         self.BufferAccuracy = 64
         self.BufferRefill = 0.5
-        self.CreateFile()
-        self.LoadConfig()
-    
+
     # Creates configuration file (if it doesn't exist)
     def CreateFile(self):
         if not os.path.exists("config.json"):
+            _qclogger.logger.info("Couldn't find config.json! Creating new config.json!")
             with open("config.json", "w") as file:
                 # self.dict creates a dictionary with all attributes, have to be careful when adding new ones
                 file.write(json.dumps(self.__dict__))
