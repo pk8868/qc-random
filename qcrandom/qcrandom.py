@@ -82,6 +82,8 @@ class _QCBackend:
         self.lastChange = time.time()
         self.backend = ChooseBackend()
     def GetBackend(self):
+        # choosing backends is time-expensive, so we limit it by reusing same backend while it didn't expire
+        # expiration time is specified as seconds
         # if backend has expired choose a new backend
         if (time.time() - self.lastChange > _qcconfig.Expire):
             self.backend = ChooseBackend()
@@ -104,18 +106,18 @@ class _QCConfig:
     # Creates configuration file
     def CreateFile(self):
         if not os.path.exists("config.json"):
-            with open("qcconfig.json", "w") as file:
+            with open("config.json", "w") as file:
                 # self.dict creates a dictionary with all attributes, have to be careful when adding new ones
                 file.write(json.dumps(self.__dict__))
 
     # Loads values from config.json
     def LoadConfig(self):
-        with open("qcconfig.json", "r") as file:
+        with open("config.json", "r") as file:
             config = json.load(file)
             # Copy same keys to _QCConfig from config file
             for key in config.keys():
                 if key in self.__dict__.keys():
-                    self.__dict__[key] = config[key] 
+                    self.__dict__[key] = config[key]
         self.CheckConfig()
 
     def CheckConfig(self):
