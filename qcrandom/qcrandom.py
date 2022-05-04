@@ -103,7 +103,7 @@ class _QCConfig:
         self.CreateFile()
         self.LoadConfig()
     
-    # Creates configuration file
+    # Creates configuration file (if it doesn't exist)
     def CreateFile(self):
         if not os.path.exists("config.json"):
             with open("config.json", "w") as file:
@@ -147,6 +147,10 @@ def LoadConfig():
 def GetRoundFactor(accuracy):
     return len(str(2**accuracy))
 
+# Calculates number between 0 and 1 based on string returned by qiskit job
+def CalculateFraction(strValue, accuracy):
+    return round(int(strValue, 2) / (2**accuracy - 1), GetRoundFactor(accuracy))
+
 # Fills secondary buffer
 def GenerateBuffer(accuracy, buffersize):
     assert accuracy > 1, "Accuracy must be higher than 1!"
@@ -176,7 +180,8 @@ def GenerateBuffer(accuracy, buffersize):
     # clear the buffer and fill it with new data
     _qcthreading.buffer.clear()
     for number in data:
-        _qcthreading.buffer.append(round(int(number, 2) / (2**accuracy - 1), GetRoundFactor(accuracy)))
+        _qcthreading.buffer.append(CalculateFraction(number, accuracy))
+    
     _qclogger.logger.info(f"Second thread finished working, main buffer size {GetMainBufferSize()}, secondary buffer size {len(_qcthreading.buffer)}")
 
 # wrapper around GenerateBuffer with accuracy and size specified in _qcconfig
@@ -227,17 +232,11 @@ def CheckBufferState():
     if GetMainBufferSize() == 0:
         _qcthreading.copyBuffer()
 
-# Generates random number between 0 and 1 (QCRandom helper function)
-def GenerateRandomFraction(accuracy):
-    assert accuracy > 1, "Accuracy must be higher than 1!"
-    CheckBufferState()
-    number = GetNumber()
-    return round(number, GetRoundFactor(accuracy))
-
 # Main interface - generates random numbers between left and right
 def QCRandom(left, right, accuracy=16):
     assert accuracy > 1, "Accuracy must be higher than 1!"
     assert left < right, "Left must be lower than right!"
-    
-    ret = GenerateRandomFraction(accuracy) * abs(right - left) + left
+    CheckBufferState()
+
+    ret = GetNumber() * abs(right - left) + left
     return round(ret, GetRoundFactor(accuracy))
