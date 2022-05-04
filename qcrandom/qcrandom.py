@@ -9,6 +9,8 @@ import os
 import threading
 import io
 
+from sympy import false
+
 
 def ConfigCheck():
     try:
@@ -98,8 +100,9 @@ class _QCBackend:
 class _QCConfig:
     def __init__(self):
         self.LoadDefaultValues()
-        self.CreateFile()
-        self.LoadConfig()
+        # Only load config from file if file exsisted before
+        if self.CreateFile():
+            self.LoadConfig()
     
     # Set default values
     def LoadDefaultValues(self):
@@ -112,13 +115,20 @@ class _QCConfig:
         self.BufferRefill = 0.5
 
     # Creates configuration file (if it doesn't exist)
+    # Returns True/False. If the value is True that means that config.json exists and it should be loaded during initialization
     def CreateFile(self):
-        if not os.path.exists("config.json"):
-            # Using print, becouse _QCConfig is initialized before _QCLogger
-            print("Couldn't find config.json! Creating new config.json!")
-            with open("config.json", "w") as file:
-                # self.dict creates a dictionary with all attributes, have to be careful when adding new ones
-                file.write(json.dumps(self.__dict__))
+        # If config.json exists return true
+        if os.path.exists("config.json"):
+            return True
+
+        # Using print, because _QCConfig is initialized before _QCLogger
+        print("Couldn't find config.json! Creating new config.json!")
+        with open("config.json", "w") as file:
+            # self.dict creates a dictionary with all attributes, have to be careful when adding new ones
+            file.write(json.dumps(self.__dict__))
+        return False
+
+        
 
     # Loads values from config.json
     def LoadConfig(self):
