@@ -9,7 +9,15 @@ import os
 import threading
 import io
 
-from sympy import false
+# Define default values
+DEFAULT_LOG_FILES = ["qcrandom.log"]
+DEFAULT_DEVICE_EXCLUSIONS = []
+DEFAULT_DEVICE_EXPIRATION_TIME = 600
+
+# Define default buffer values
+DEFAULT_QCBUFFER_SIZE = 100
+DEFAULT_QCBUFFER_ACCURACY = 64
+DEFAULT_QCBUFFER_REFILL_THRESHOLD = 0.5
 
 
 def ConfigCheck():
@@ -91,6 +99,7 @@ class _QCBackend:
     def GetBackend(self):
         # choosing backends is time-expensive, so we limit it by reusing same backend until it expired
         # expiration time is specified as seconds
+        # backend has expiration time because selected device may go into
         # if backend has expired choose a new backend
         if (time.time() - self.lastChange > _qcconfig.BackendExpireTime):
             self.backend = ChooseBackend()
@@ -106,13 +115,13 @@ class _QCConfig:
     
     # Set default values
     def LoadDefaultValues(self):
-        self.LogFiles = ['qcrandom.log']
-        self.BackendExclusions = []
-        self.BackendExpireTime = 600
+        self.LogFiles = DEFAULT_LOG_FILES
+        self.BackendExclusions = DEFAULT_DEVICE_EXCLUSIONS
+        self.BackendExpireTime = DEFAULT_DEVICE_EXPIRATION_TIME
 
-        self.BufferSize = 100
-        self.BufferAccuracy = 64
-        self.BufferRefill = 0.5
+        self.BufferSize = DEFAULT_QCBUFFER_SIZE
+        self.BufferAccuracy = DEFAULT_QCBUFFER_ACCURACY
+        self.BufferRefill = DEFAULT_QCBUFFER_REFILL_THRESHOLD
 
     # Creates configuration file (if it doesn't exist)
     # Returns True/False. If the value is True that means that config.json exists and it should be loaded during initialization
@@ -233,7 +242,7 @@ _qcthreading = _QCThreading()
 def GetRefillThreshold():
     return int(_qcconfig.BufferRefill * _qcconfig.BufferSize)
 
-# Returns first number from the buffer and pops it off
+# Returns first number from the buffer and removes it off the list
 def GetNumber():
     number = _qcbuffer[0]
     _qcbuffer.pop(0)
