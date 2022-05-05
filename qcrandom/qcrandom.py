@@ -122,7 +122,7 @@ class _QCConfig:
             return True
 
         # Using print, because _QCConfig is initialized before _QCLogger
-        print("Couldn't find config.json! Creating new config.json!")
+        print("Couldn't find config.json! Creating new config.json!", file=sys.stderr)
         with open("config.json", "w") as file:
             # self.dict creates a dictionary with all attributes, have to be careful when adding new ones
             file.write(json.dumps(self.__dict__))
