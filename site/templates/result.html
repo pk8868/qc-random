@@ -1,63 +1,7 @@
-<!DOCTYPE html>
-<head>
-    <title>QCRandom</title>
-    <style>
-        *{
-            margin: 0;
-            padding: 0;
-        }
+{% include 'index.html' %}
 
-        body{
-            text-align: center;
-            background-color: #c9c9c9;
-        }
-
-        header{
-            width: 100%;
-            padding-top: 1%;
-            padding-bottom: 1%;
-            background-color: #001f5c;
-            color: white;
-        }
-
-        footer{
-            width: 100%;
-            padding-top: 1%;
-            padding-bottom: 1%;
-            background-color: #001f5c;
-            color: white;
-            position: fixed;
-                bottom: 0;
-        }
-    </style>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
-</head>
-
-<body>
-    <header>
-        <h1>QCRandom</h1>
-        <p>On this page where you can generate random numbers on quantum computer</p>
-    </header>
-
-    <br>
-
-    <form action="{{ url_for('grn') }}" method="post">
-        <input type="number" placeholder="min number" name="left" />
-        <input type="number" placeholder="max number" name="right" />
-        <br>
-        <input type="checkbox" label="intiger" name="intiger">
-        <br>
-        <input type="submit" value="Generate Random Number" name="GRN" />
-    </form>
-    
-    <br>
-    <br>
-
-    <p>Your random number is: </p>
-    <h1>{{number}}</h1>
-
-    <footer>
-        <p>Creators: Jakub Wtorkiewicz, Paweł Kromka</p>
-        <a href="https://github.com/pk8868/qc-random"><i class="fa fa-github-square" style="font-size:24px; text-decoration: none; color: white"></i></a>
-    </footer>
-</body>
+{% block result %}
+<br><br>
+<p>Your random number is: </p>
+<h1>{{number}}</h1>
+{% endblock %}

@@ -7,12 +7,12 @@ import os
 app = Flask(__name__)
 
 
-@app.route("/", methods=['GET', 'POST'])
+@app.route("/", methods=['GET'])
 def home():
-    return render_template("index.html")
+    return render_template("index.html", result="")
 
-@app.route('/grn', methods=['GET','POST'])
-def grn():
+@app.route('/', methods=['POST'])
+def GenerateRandomNumber():
     left = int(request.form['left'])
     right = int(request.form['right'])
     try:
@@ -20,7 +20,7 @@ def grn():
         randnumber=int(qcrandom.QCRandom(left,right))
     except Exception:
         randnumber=qcrandom.QCRandom(left,right)
-    return render_template("result.html",number=randnumber)
+    return render_template("result.html", number=randnumber)
 
 
 if __name__ == "__main__":

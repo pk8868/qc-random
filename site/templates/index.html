@@ -29,6 +29,9 @@
             position: fixed;
                 bottom: 0;
         }
+        form * {
+            margin: 3px;
+        }
     </style>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 </head>
@@ -36,20 +39,22 @@
 <body>
     <header>
         <h1>QCRandom</h1>
-        <p>On this page where you can generate random numbers on quantum computer</p>
+        <p>On this page where you can generate random numbers on a quantum computer</p>
     </header>
 
     <br>
 
-    <form action="{{ url_for('grn') }}" method="post">
-        <input type="number" placeholder="min number" name="left" />
-        <input type="number" placeholder="max number" name="right" />
+    <form action="{{ url_for('home') }}" method="post">
+        <input type="number" placeholder="Min" name="left" required/>
+        <input type="number" placeholder="Max" name="right" required/>
         <br>
+        Intiger: 
         <input type="checkbox" label="integer" name="integer">
         <br>
         <input type="submit" value="Generate Random Number" name="GRN" />
     </form>
-    
+    {% block result %}
+    {% endblock %}
     <footer>
         <p>Creators: Jakub Wtorkiewicz, Paweł Kromka</p>
         <a href="https://github.com/pk8868/qc-random"><i class="fa fa-github-square" style="font-size:24px; text-decoration: none; color: white"></i></a>
