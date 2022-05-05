@@ -1,2 +1,2 @@
 from qcrandom.qcrandom import LoadConfig, GetRoundFactor
-from qcrandom.qcrandom import QCRandom, GetBufferSize
+from qcrandom.qcrandom import QCRandom, GetNumberCount

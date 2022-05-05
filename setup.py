@@ -6,7 +6,7 @@ with open("README.md", "r", encoding="utf-8") as file:
 
 setuptools.setup(
     name = "qcrandom",
-    version = "0.2-3",
+    version = "0.3-1",
     author = "Pawel Kromka, Jakub Wtorkiewicz",
     author_email = "pawel.kromka.05@onet.eu, kuba.wtorkiewicz@gmail.com",
     description = "qcrandom is a python library which provides easy way to generate random numbers on quantum computers.",

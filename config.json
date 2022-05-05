@@ -1,11 +1,9 @@
 {
-    "Expire": 600,
-    "Log_File": "qcrandom.log",
-    "Exclusions": [],
+    "LogFiles": ["qcrandom.log"],
+    "BackendExpireTime": 600,
+    "BackendExclusions": [],
 
-    "Buffer": {
-        "Size": 100,
-        "Accuracy": 64,
-        "Refill": 0.5
-    }
+    "BufferSize": 100,
+    "BufferAccuracy": 64,
+    "BufferRefill": 0.5
 }
