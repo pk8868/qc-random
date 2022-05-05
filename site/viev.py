@@ -16,7 +16,7 @@ def GenerateRandomNumber():
     left = int(request.form['left'])
     right = int(request.form['right'])
     try:
-        request.form['intiger']
+        request.form['integer']
         randnumber=int(qcrandom.QCRandom(left,right))
     except Exception:
         randnumber=qcrandom.QCRandom(left,right)
