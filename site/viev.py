@@ -15,6 +15,10 @@ def home():
 def GenerateRandomNumber():
     left = int(request.form['left'])
     right = int(request.form['right'])
+
+    if left > right:
+        return render_template("result.html", number="Couldn't generate random number! min is higher than max!")
+
     try:
         request.form['integer']
         randnumber=int(qcrandom.QCRandom(left,right))
